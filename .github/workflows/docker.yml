@@ -5,7 +5,7 @@ on:
       - master
 
 env:
-  REGISTRY_IMAGE: user/app
+  REGISTRY_IMAGE: dumbaspl/aero2solver
 
 jobs:
   build:
@@ -108,6 +108,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: dumbaspl/aero2solver
+          repository: ${{ env.REGISTRY_IMAGE }}
           short-description: Solve Aero2 captchas automatically using the magic of machine learning and computer vision.
           enable-url-completion: true
