@@ -10,7 +10,7 @@ Prebuilt images are available on [Docker Hub](https://hub.docker.com/r/dumbaspl/
 ### Requirements
 
 - Docker (or any other OCI compatible container runtime)
-- The container needs to be able to resolve and connect to (http://bdi.free.aero2.net.pl:8080/)[http://bdi.free.aero2.net.pl:8080/].
+- The container needs to be able to resolve and connect to [http://bdi.free.aero2.net.pl:8080/](http://bdi.free.aero2.net.pl:8080/).
 
 This project doesn't need any GPU acceleration. 
 Even on low end hardware the solving speed is fairly quick because the captchas are small and infrequent.
