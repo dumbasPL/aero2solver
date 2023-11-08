@@ -18,31 +18,31 @@ fn get_model_path(filename: &str) -> String {
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// model configuration file.
-    #[arg(short = 'c', long, default_value_t = get_model_path("captcha.cfg"))]
+    #[arg(short = 'c', long, env = "AERO2_MODEL_CFG", default_value_t = get_model_path("captcha.cfg"))]
     model_cfg: String,
 
     /// model weights file.
-    #[arg(short = 'w', long, default_value_t = get_model_path("captcha.weights"))]
+    #[arg(short = 'w', long, env = "AERO2_WEIGHTS", default_value_t = get_model_path("captcha.weights"))]
     weights: String,
 
     /// model labels file.
-    #[arg(short = 'l', long, default_value_t = get_model_path("captcha.names"))]
+    #[arg(short = 'l', long, env = "AERO2_LABELS", default_value_t = get_model_path("captcha.names"))]
     labels: String,
 
     /// minimum confidence threshold for captcha detection (0.0 - 1.0).
-    #[arg(short = 't', long, default_value_t = 0.8)]
+    #[arg(short = 't', long, env = "AERO2_THRESHOLD", default_value_t = 0.8)]
     threshold: f32,
 
     /// time to wait after aero2 returns an error (in seconds).
-    #[arg(long, default_value_t = 5.0)]
+    #[arg(long, env = "AERO2_ERROR_DELAY", default_value_t = 10.0)]
     error_delay: f32,
 
     /// time to wait between checking for new captchas (in seconds).
-    #[arg(long, default_value_t = 10.0)]
+    #[arg(long, env = "AERO2_CHECK_DELAY", default_value_t = 10.0)]
     check_delay: f32,
 
     /// time to wait after successfully solving a captcha (in seconds).
-    #[arg(long, default_value_t = 55.0 * 60.0)]
+    #[arg(long, env = "AERO2_SOLVED_DELAY", default_value_t = 60.0)]
     solved_delay: f32,
 }
 
