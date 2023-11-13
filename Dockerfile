@@ -1,33 +1,33 @@
-FROM rust:1-bullseye AS chef
-RUN cargo install cargo-chef 
-WORKDIR /app
+FROM --platform=${BUILDPLATFORM:-linux/amd64} tonistiigi/xx AS xx
 
-FROM chef AS planner
-COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
-
-FROM chef AS builder
-
-RUN apt-get update && apt-get install -y build-essential cmake clang \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY --from=planner /app/recipe.json recipe.json
-
-# Build dependencies - this is the caching Docker layer!
-RUN cargo chef cook --release --recipe-path recipe.json
-
-# Build application
-COPY . .
-RUN cargo build --release --bin aero2solver
-
-FROM debian:bullseye-slim
-
-RUN apt-get update && apt-get install -y libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
+FROM --platform=${BUILDPLATFORM:-linux/amd64} rust:1-bullseye as builder
 
 WORKDIR /app
+
+COPY --from=xx / /
+
+# install native dependencies first so we can cache them
+RUN apt-get update && \
+    apt-get install -y build-essential cmake clang llvm g++
+
+ARG TARGETPLATFORM
+ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
+
+RUN xx-apt-get install -y xx-cxx-essentials g++
+
+COPY . .
+
+RUN ./build.sh
+
+FROM debian:bullseye-slim AS runtime
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY ./model/ ./model/
-COPY --from=builder /app/target/release/aero2solver ./aero2solver
+COPY --from=builder /app/target/aero2solver ./aero2solver
 
 ENTRYPOINT [ "/app/aero2solver" ]
