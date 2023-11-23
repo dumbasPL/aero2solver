@@ -10,16 +10,16 @@ use aero2solver::{
 };
 use anyhow::{anyhow, Result};
 
-fn run(solver: &mut Aero2Solver) -> Result<()> {
+async fn run(solver: &mut Aero2Solver) -> Result<()> {
     let client = PortalClient::new(BASE_URL, USER_AGENT)?;
 
-    let state = client.get_state()?;
+    let state = client.get_state().await?;
 
     let mut tries = 0;
     let (solution, captcha) = loop {
         tries += 1;
         println!("Trying to solve captcha (try {})", tries);
-        let captcha = client.get_captcha(&state.session_id)?;
+        let captcha = client.get_captcha(&state.session_id).await?;
         match solver.solve(&captcha, 0.9, 8) {
             Ok(solution) => {
                 println!("Captcha solved as {} after {}", solution, tries);
@@ -29,7 +29,7 @@ fn run(solver: &mut Aero2Solver) -> Result<()> {
         }
     };
 
-    let state = client.submit_captcha(&state.session_id, &solution)?;
+    let state = client.submit_captcha(&state.session_id, &solution).await?;
     match state.message {
         Some(ref message) if message.eq("Rozłącz i ponownie połącz się z Internetem.") => {
             println!("Captcha solved, code: {}", solution);
@@ -46,7 +46,8 @@ fn run(solver: &mut Aero2Solver) -> Result<()> {
     Ok(())
 }
 
-fn main() -> Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<()> {
     let mut solver = Aero2Solver::new(
         "./model/captcha.names",
         "./model/captcha.cfg",
@@ -62,7 +63,7 @@ fn main() -> Result<()> {
             break;
         }
 
-        match run(&mut solver) {
+        match run(&mut solver).await {
             Ok(_) => success_count += 1,
             Err(e) => println!("Error: {}", e),
         }

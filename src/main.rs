@@ -46,7 +46,8 @@ struct Args {
     solved_delay: f32,
 }
 
-fn main() -> Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<()> {
     let Args {
         model_cfg,
         weights,
@@ -68,10 +69,12 @@ fn main() -> Result<()> {
     let solved_sleep_time = Duration::from_secs_f32(solved_delay);
 
     loop {
-        let was_solved = run(&mut solver, threshold, error_sleep_time).unwrap_or_else(|x| {
-            println!("Error: {}", x);
-            false
-        });
+        let was_solved = run(&mut solver, threshold, error_sleep_time)
+            .await
+            .unwrap_or_else(|x| {
+                println!("Error: {}", x);
+                false
+            });
 
         let sleep_time = match was_solved {
             true => {
@@ -85,12 +88,16 @@ fn main() -> Result<()> {
     }
 }
 
-fn run(solver: &mut Aero2Solver, min_threshold: f32, fail_sleep_time: Duration) -> Result<bool> {
+async fn run(
+    solver: &mut Aero2Solver,
+    min_threshold: f32,
+    fail_sleep_time: Duration,
+) -> Result<bool> {
     let client = PortalClient::new(BASE_URL, USER_AGENT)?;
 
     let mut was_required = false;
 
-    let mut state = client.get_state()?;
+    let mut state = client.get_state().await?;
     loop {
         if !state.captcha_present {
             let status = match was_required {
@@ -125,7 +132,7 @@ fn run(solver: &mut Aero2Solver, min_threshold: f32, fail_sleep_time: Duration) 
                 break Err(anyhow!("Too many tries"));
             }
             println!("Trying to solve captcha (try {})", tries);
-            let captcha = client.get_captcha(&state.session_id)?;
+            let captcha = client.get_captcha(&state.session_id).await?;
             match solver.solve(&captcha, min_threshold, 8) {
                 Ok(solution) => {
                     println!("Captcha solved as {} after {}", solution, tries);
@@ -135,6 +142,6 @@ fn run(solver: &mut Aero2Solver, min_threshold: f32, fail_sleep_time: Duration) 
             }
         }?;
 
-        state = client.submit_captcha(&state.session_id, &solution)?;
+        state = client.submit_captcha(&state.session_id, &solution).await?;
     }
 }

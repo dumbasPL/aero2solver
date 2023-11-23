@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use ::reqwest::redirect::Policy;
 use anyhow::{anyhow, Ok, Result};
-use reqwest::blocking as reqwest;
+use reqwest;
 
 pub struct CaptchaState {
     pub captcha_present: bool,
@@ -62,31 +62,35 @@ impl PortalClient {
         })
     }
 
-    pub fn get_state(&self) -> Result<CaptchaState> {
+    pub async fn get_state(&self) -> Result<CaptchaState> {
         let page = self
             .client
             .post(self.base_url)
             .form(&[("viewForm", "true")])
-            .send()?
-            .text()?;
+            .send()
+            .await?
+            .text()
+            .await?;
 
         self.parse_page(&page)
     }
 
-    pub fn get_captcha(&self, session_id: &str) -> Result<Vec<u8>> {
+    pub async fn get_captcha(&self, session_id: &str) -> Result<Vec<u8>> {
         let bytes = self
             .client
             .get(format!(
                 "{}getCaptcha.html?PHPSESSID={}",
                 self.base_url, session_id
             ))
-            .send()?
-            .bytes()?;
+            .send()
+            .await?
+            .bytes()
+            .await?;
 
         Ok(bytes.to_vec())
     }
 
-    pub fn submit_captcha(&self, session_id: &str, solution: &str) -> Result<CaptchaState> {
+    pub async fn submit_captcha(&self, session_id: &str, solution: &str) -> Result<CaptchaState> {
         let page = self
             .client
             .post(self.base_url)
@@ -95,8 +99,10 @@ impl PortalClient {
                 ("viewForm", "true"),
                 ("captcha", solution),
             ])
-            .send()?
-            .text()?;
+            .send()
+            .await?
+            .text()
+            .await?;
 
         self.parse_page(&page)
     }
