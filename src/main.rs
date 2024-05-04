@@ -5,7 +5,7 @@ use aero2solver::{
 };
 use anyhow::{anyhow, Result};
 use clap::Parser;
-use std::{path::PathBuf, thread, time::Duration};
+use std::{path::PathBuf, process, thread, time::Duration};
 
 fn get_model_path(filename: &str) -> String {
     let model_path = option_env!("MODEL_PATH").unwrap_or("./model");
@@ -44,6 +44,16 @@ struct Args {
     /// time to wait after successfully solving a captcha (in seconds).
     #[arg(long, env = "AERO2_SOLVED_DELAY", default_value_t = 60.0)]
     solved_delay: f32,
+
+    /// test captcha solving without actually submitting it
+    #[arg(
+        short = 'd',
+        long,
+        value_name = "count",
+        num_args = 0..=1,
+        default_missing_value = "1"
+    )]
+    dry_run: Option<u32>,
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -56,20 +66,36 @@ async fn main() -> Result<()> {
         check_delay,
         solved_delay,
         threshold,
+        dry_run,
     } = Args::parse();
 
     if threshold < 0.0 || threshold > 1.0 {
         return Err(anyhow!("Threshold must be between 0.0 and 1.0"));
     }
 
-    let mut solver = Aero2Solver::new(&labels, &model_cfg, &weights)?;
+    let mut solver = Aero2Solver::new(&labels, &model_cfg, &weights, threshold, 8)?;
+
+    if let Some(count) = dry_run {
+        let mut errored = false;
+        for i in 0..count {
+            println!("Running test {}/{}", i + 1, count);
+            if let Err(e) = run_test(&mut solver).await {
+                println!("Error: {}", e);
+                errored = true;
+            }
+        }
+        if errored {
+            process::exit(1);
+        }
+        return Ok(());
+    }
 
     let error_sleep_time = Duration::from_secs_f32(error_delay);
     let check_sleep_time = Duration::from_secs_f32(check_delay);
     let solved_sleep_time = Duration::from_secs_f32(solved_delay);
 
     loop {
-        let was_solved = run(&mut solver, threshold, error_sleep_time)
+        let was_solved = run(&mut solver, error_sleep_time)
             .await
             .unwrap_or_else(|x| {
                 println!("Error: {}", x);
@@ -88,11 +114,15 @@ async fn main() -> Result<()> {
     }
 }
 
-async fn run(
-    solver: &mut Aero2Solver,
-    min_threshold: f32,
-    fail_sleep_time: Duration,
-) -> Result<bool> {
+async fn run_test(solver: &mut Aero2Solver) -> Result<()> {
+    let client = PortalClient::new(BASE_URL, USER_AGENT)?;
+
+    solve_captcha(solver, &client, None, 20).await?;
+
+    Ok(())
+}
+
+async fn run(solver: &mut Aero2Solver, fail_sleep_time: Duration) -> Result<bool> {
     let client = PortalClient::new(BASE_URL, USER_AGENT)?;
 
     let mut was_required = false;
@@ -125,23 +155,37 @@ async fn run(
             None => println!("Captcha required"),
         }
 
-        let mut tries = 0;
-        let solution: String = loop {
-            tries += 1;
-            if tries > 20 {
-                break Err(anyhow!("Too many tries"));
-            }
-            println!("Trying to solve captcha (try {})", tries);
-            let captcha = client.get_captcha(&state.session_id).await?;
-            match solver.solve(&captcha, min_threshold, 8) {
-                Ok(solution) => {
-                    println!("Captcha solved as {} after {}", solution, tries);
-                    break Ok(solution);
-                }
-                Err(e) => println!("Error while solving captcha: {}", e),
-            }
-        }?;
+        let solution = solve_captcha(solver, &client, Some(&state.session_id), 20).await?;
 
         state = client.submit_captcha(&state.session_id, &solution).await?;
     }
+}
+
+async fn solve_captcha(
+    solver: &mut Aero2Solver,
+    client: &PortalClient,
+    session_id: Option<&str>,
+    max_tries: u32,
+) -> Result<String> {
+    let mut tries = 0;
+    let solution: String = loop {
+        tries += 1;
+        if tries > max_tries {
+            break Err(anyhow!("Too many tries"));
+        }
+        println!("Trying to solve captcha (try {})", tries);
+        let captcha = client.get_captcha(session_id).await?;
+        match solver.solve(&captcha) {
+            Ok(solution) => {
+                match tries {
+                    1 => println!("Captcha solved as {} after {} try", solution, tries),
+                    _ => println!("Captcha solved as {} after {} tries", solution, tries),
+                }
+                break Ok(solution);
+            }
+            Err(e) => println!("Error while solving captcha: {}", e),
+        }
+    }?;
+
+    Ok(solution)
 }

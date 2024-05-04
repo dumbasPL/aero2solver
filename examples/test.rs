@@ -14,8 +14,8 @@ async fn run(solver: &mut Aero2Solver) -> Result<()> {
     let solution: String = loop {
         tries += 1;
         println!("Trying to solve captcha (try {})", tries);
-        let captcha = client.get_captcha(&state.session_id).await?;
-        match solver.solve(&captcha, 0.8, 8) {
+        let captcha = client.get_captcha(Some(&state.session_id)).await?;
+        match solver.solve(&captcha) {
             Ok(solution) => {
                 println!("Captcha solved as {} after {}", solution, tries);
                 break solution;
@@ -39,6 +39,8 @@ async fn main() -> Result<()> {
         "./model/captcha.names",
         "./model/captcha.cfg",
         "./model/captcha.weights",
+        0.8,
+        8,
     )?;
 
     loop {

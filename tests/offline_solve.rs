@@ -7,6 +7,8 @@ fn test_solve() {
         "./model/captcha.names",
         "./model/captcha.cfg",
         "./model/captcha.weights",
+        0.9,
+        8,
     )
     .unwrap();
 
@@ -31,7 +33,7 @@ fn test_solve() {
             .unwrap();
 
         let captcha = fs::read(file).unwrap();
-        let solution = solver.solve(&captcha, 0.9, 8).unwrap();
+        let solution = solver.solve(&captcha).unwrap();
         assert_eq!(solution, correct_solution);
         println!("solved test captcha: {}", solution);
     }

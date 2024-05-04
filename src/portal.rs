@@ -75,13 +75,15 @@ impl PortalClient {
         self.parse_page(&page)
     }
 
-    pub async fn get_captcha(&self, session_id: &str) -> Result<Vec<u8>> {
+    pub async fn get_captcha(&self, session_id: Option<&str>) -> Result<Vec<u8>> {
         let bytes = self
             .client
-            .get(format!(
-                "{}getCaptcha.html?PHPSESSID={}",
-                self.base_url, session_id
-            ))
+            .get(match session_id {
+                Some(session_id) => {
+                    format!("{}getCaptcha.html?PHPSESSID={}", self.base_url, session_id)
+                }
+                None => format!("{}getCaptcha.html", self.base_url),
+            })
             .send()
             .await?
             .bytes()
