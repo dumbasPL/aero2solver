@@ -2,14 +2,17 @@
 name = "aero2solver"
 description = "Solve Aero2 captchas automatically"
 authors = ["nezu <nezu@nezu.cc>"]
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 
 [dependencies]
-darknet = "0.4"
+darknet = { version = "0.4", default-features = false }
 anyhow = "1.0"
-reqwest = { version = "0.11", default-features = false }
+reqwest = { version = "0.12", default-features = false }
 tl = "0.7"
 image = "0.24"
-clap = { version = "4.4.7", features = ["derive", "string", "env"] }
+clap = { version = "4.4", features = ["derive", "string", "env"] }
 tokio = { version = "1", features = ["macros"]}
+
+[features]
+openmp = ["darknet/enable-openmp"]

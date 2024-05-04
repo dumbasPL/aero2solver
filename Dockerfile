@@ -23,10 +23,6 @@ FROM debian:bullseye-slim AS runtime
 
 WORKDIR /app
 
-RUN apt-get update && \
-    apt-get install -y libgomp1 && \
-    rm -rf /var/lib/apt/lists/*
-
 COPY ./model/ ./model/
 COPY --from=builder /app/target/aero2solver ./aero2solver
 
