@@ -1,6 +1,7 @@
 use std::{
     fs::{create_dir_all, File},
     io::Write,
+    time::Duration,
 };
 
 use aero2solver::{
@@ -11,7 +12,7 @@ use aero2solver::{
 use anyhow::{anyhow, Result};
 
 async fn run(solver: &mut Aero2Solver) -> Result<()> {
-    let client = PortalClient::new(BASE_URL, USER_AGENT)?;
+    let client = PortalClient::new(BASE_URL, USER_AGENT, Duration::from_secs(60))?;
 
     let state = client.get_state().await?;
 

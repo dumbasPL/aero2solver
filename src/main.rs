@@ -45,6 +45,10 @@ struct Args {
     #[arg(long, env = "AERO2_SOLVED_DELAY", default_value_t = 60.0)]
     solved_delay: f32,
 
+    // connection timeout (in seconds).
+    #[arg(long, env = "AERO2_TIMEOUT", default_value_t = 30.0)]
+    timeout: f32,
+
     /// test captcha solving without actually submitting it
     #[arg(
         short = 'd',
@@ -65,6 +69,7 @@ async fn main() -> Result<()> {
         error_delay,
         check_delay,
         solved_delay,
+        timeout,
         threshold,
         dry_run,
     } = Args::parse();
@@ -73,13 +78,18 @@ async fn main() -> Result<()> {
         return Err(anyhow!("Threshold must be between 0.0 and 1.0"));
     }
 
+    let error_sleep_time = Duration::from_secs_f32(error_delay);
+    let check_sleep_time = Duration::from_secs_f32(check_delay);
+    let solved_sleep_time = Duration::from_secs_f32(solved_delay);
+    let timeout = Duration::from_secs_f32(timeout);
+
     let mut solver = Aero2Solver::new(&labels, &model_cfg, &weights, threshold, 8)?;
 
     if let Some(count) = dry_run {
         let mut errored = false;
         for i in 0..count {
             println!("Running test {}/{}", i + 1, count);
-            if let Err(e) = run_test(&mut solver).await {
+            if let Err(e) = run_test(&mut solver, timeout).await {
                 println!("Error: {}", e);
                 errored = true;
             }
@@ -90,12 +100,8 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
-    let error_sleep_time = Duration::from_secs_f32(error_delay);
-    let check_sleep_time = Duration::from_secs_f32(check_delay);
-    let solved_sleep_time = Duration::from_secs_f32(solved_delay);
-
     loop {
-        let was_solved = run(&mut solver, error_sleep_time)
+        let was_solved = run(&mut solver, error_sleep_time, timeout)
             .await
             .unwrap_or_else(|x| {
                 println!("Error: {}", x);
@@ -114,16 +120,20 @@ async fn main() -> Result<()> {
     }
 }
 
-async fn run_test(solver: &mut Aero2Solver) -> Result<()> {
-    let client = PortalClient::new(BASE_URL, USER_AGENT)?;
+async fn run_test(solver: &mut Aero2Solver, timeout: Duration) -> Result<()> {
+    let client = PortalClient::new(BASE_URL, USER_AGENT, timeout)?;
 
     solve_captcha(solver, &client, None, 20).await?;
 
     Ok(())
 }
 
-async fn run(solver: &mut Aero2Solver, fail_sleep_time: Duration) -> Result<bool> {
-    let client = PortalClient::new(BASE_URL, USER_AGENT)?;
+async fn run(
+    solver: &mut Aero2Solver,
+    fail_sleep_time: Duration,
+    timeout: Duration,
+) -> Result<bool> {
+    let client = PortalClient::new(BASE_URL, USER_AGENT, timeout)?;
 
     let mut was_required = false;
 

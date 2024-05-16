@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use aero2solver::{
     constants::{BASE_URL, USER_AGENT},
     portal::PortalClient,
@@ -6,7 +8,7 @@ use aero2solver::{
 use anyhow::Result;
 
 async fn run(solver: &mut Aero2Solver) -> Result<()> {
-    let client = PortalClient::new(BASE_URL, USER_AGENT)?;
+    let client = PortalClient::new(BASE_URL, USER_AGENT, Duration::from_secs(60))?;
 
     let state = client.get_state().await?;
 

@@ -16,8 +16,13 @@ pub struct PortalClient {
 }
 
 impl PortalClient {
-    pub fn new(base_url: &'static str, user_agent: &'static str) -> Result<Self> {
+    pub fn new(
+        base_url: &'static str,
+        user_agent: &'static str,
+        timeout: Duration,
+    ) -> Result<Self> {
         let client = reqwest::Client::builder()
+            .read_timeout(timeout)
             .pool_idle_timeout(Duration::from_nanos(1)) // disable connection pooling
             .redirect(Policy::none()) // disable redirects
             .user_agent(user_agent)
