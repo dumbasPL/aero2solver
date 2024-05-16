@@ -2,7 +2,7 @@
 name = "aero2solver"
 description = "Solve Aero2 captchas automatically"
 authors = ["nezu <nezu@nezu.cc>"]
-version = "1.0.1"
+version = "1.1.0"
 edition = "2021"
 
 [dependencies]
