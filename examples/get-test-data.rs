@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
 
         match run(&mut solver).await {
             Ok(_) => success_count += 1,
-            Err(e) => println!("Error: {}", e),
+            Err(e) => println!("Error: {:#}", e),
         }
     }
 

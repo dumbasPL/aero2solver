@@ -90,7 +90,7 @@ async fn main() -> Result<()> {
         for i in 0..count {
             println!("Running test {}/{}", i + 1, count);
             if let Err(e) = run_test(&mut solver, timeout).await {
-                println!("Error: {}", e);
+                println!("Error: {:#}", e);
                 errored = true;
             }
         }
@@ -104,7 +104,7 @@ async fn main() -> Result<()> {
         let was_solved = run(&mut solver, error_sleep_time, timeout)
             .await
             .unwrap_or_else(|x| {
-                println!("Error: {}", x);
+                println!("Error: {:#}", x);
                 false
             });
 
