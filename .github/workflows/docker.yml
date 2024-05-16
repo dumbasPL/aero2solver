@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - v*
 
 env:
   REGISTRY_IMAGE: dumbaspl/aero2solver
