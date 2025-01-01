@@ -1,3 +1,15 @@
+> [!CAUTION]
+> # Project archived
+> The project has been archived due to the aero2 service no longer utilizing a captcha.
+> 
+> Here is the announcement made by Polkomtel:
+> > Szanowni Państwo,
+> >
+> > Polkomtel Sp. z o.o. informuje, że z dniem 30 grudnia 2024 r. zakończy udostępnianie Bezpłatnego Dostępu do Internetu (dalej: BDI). Działanie to jest podyktowane wygaśnięciem obowiązku udostępniania BDI, o którym mowa w Decyzji Prezesa UKE nr DZC-WAP-5176-8/09 (21) z dnia 10 listopada 2009 r. zmienianej kolejnymi decyzjami.
+> >
+> > Szczegółowe informacje w tym zakresie na trwałym nośniku pod bezpiecznym linkiem:
+> > https://api.plus.pl/tos/e67cb60448cc137ff40b515dbe952b35d957ec80a705707623131b08da4a710f.pdf
+
 # aero2solver
 
 Solve Aero2 captchas automatically using the magic of machine learning and computer vision.
